@@ -62,37 +62,6 @@ public class RefreshTest {
         Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
     }
 
-    @Test
-    public void testLockModeAfterRefresh() {
-        Integer customerId = null;
-
-        {
-            // Create a record in DB
-            Customer customer = createCustomer("John Doe");
-            customerId = customer.getCustomerId();
-            em.clear();
-        }
-
-        {
-            // Retrieve record with lock
-            Customer customer = em.find(Customer.class, customerId, LockModeType.PESSIMISTIC_WRITE);
-            Assert.assertNotNull(customer);
-            Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
-
-            em.refresh(customer);
-            Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
-        }
-    }
-
-    protected Customer createCustomer(String name) {
-        Customer customer = new Customer();
-        customer.setName("John Doe");
-
-        em.persist(customer);
-        em.flush();
-        return customer;
-    }
-
     protected Parent createParent(String name) {
         Parent parent = new Parent();
         parent.setName(name);
