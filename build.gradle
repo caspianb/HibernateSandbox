@@ -1,0 +1,15 @@
+apply plugin: 'java-library'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.12.Final'
+    compile group: 'org.hsqldb', name: 'hsqldb', version: '2.4.0'
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
+    
+    testCompile 'junit:junit:4.12'
+}
+
+
