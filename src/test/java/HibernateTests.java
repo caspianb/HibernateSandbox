@@ -1,3 +1,6 @@
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 
@@ -6,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class RefreshTest {
+public class HibernateTests {
 
     private EntityManager em;
 
@@ -19,27 +22,32 @@ public class RefreshTest {
     public void testEnd() {
         em.getTransaction().rollback();
         em.close();
-        em.getEntityManagerFactory().close();
+        HibernateTools.getEntityManagerFactory().close();
+    }
+
+    @Test
+    public void testManyToOneEagerMapping() {
+        Set<Integer> parentIds = createTestData(1, 5);
+        int parentId = parentIds.iterator().next();
+
+        // Retrieve parent from session cache and refresh prior to clear - we'll see only 5 children
+        Parent parent = em.find(Parent.class, parentId);
+        em.refresh(parent);
+        Assert.assertEquals(5, parent.getChildrenEager().size());
+
+        // However, after clearing and forcing a reload... things go wonky.
+        // This only occurs if batch fetching is enabled!
+        em.clear();
+        parent = em.find(Parent.class, parentId);
+        Assert.assertEquals(5, parent.getChildrenEager().size());
     }
 
     @Test
     public void testLazyCollectionAfterBatchFetchRefreshLock() {
-        final int numParents = 5;
-        final int childrenPerParent = 2;
-        int parentId = 0;
 
-        //
-        // Prep some data in the DB
-        //
-        for (int i = 0; i < numParents; i++) {
-            Parent parent = createParent("Parent_" + i);
-            parentId = parent.getParentId();
-
-            // Create some children for each parent...
-            for (int j = 0; j < childrenPerParent; j++) {
-                createChild("Child_" + i + "_" + j, 15, parent);
-            }
-        }
+        // Create some test data
+        Set<Integer> parentIds = createTestData(5, 2);
+        int parentId = parentIds.iterator().next();
 
         // Clear the session
         em.clear();
@@ -54,12 +62,12 @@ public class RefreshTest {
 
         em.refresh(parent, LockModeType.PESSIMISTIC_WRITE);
 
-        // Just something to force delazification of children on parent entity
-        // The parent is obviously attached to the session (we just refreshed it!)
-        parent.getChildren().size();
-
         // Another interesting thing to note - em.getLockMode returns an incorrect value after the above refresh
         Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
+
+        // Just something to force delazification of children on parent entity
+        // The parent is obviously attached to the session (we just refreshed it!)
+        parent.getChildrenLazy().size();
     }
 
     @Test
@@ -82,6 +90,31 @@ public class RefreshTest {
             em.refresh(customer);
             Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
         }
+    }
+
+    // ************************************************************************
+    // Helpers to create test data defined below
+    // ************************************************************************
+
+    protected Set<Integer> createTestData(int numParents, int childrenPerParent) {
+
+        Set<Integer> parentIds = new LinkedHashSet<>();
+
+        //
+        // Prep some data in the DB
+        //
+        for (int i = 0; i < numParents; i++) {
+            Parent parent = createParent("Parent_" + i);
+            int parentId = parent.getParentId();
+            parentIds.add(parentId);
+
+            // Create some children for each parent...
+            for (int j = 0; j < childrenPerParent; j++) {
+                createChild("Child_" + i + "_" + j, 15, parent);
+            }
+        }
+
+        return parentIds;
     }
 
     protected Customer createCustomer(String name) {

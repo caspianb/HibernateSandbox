@@ -1,8 +1,11 @@
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -25,7 +28,10 @@ public class Parent {
     private String name;
 
     @OneToMany(mappedBy = "parent")
-    private Set<Child> children = new LinkedHashSet<>();
+    private Set<Child> childrenLazy = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
+    private List<Child> childrenEager = new ArrayList<>();
 
     public int getParentId() {
         return parentId;
@@ -39,12 +45,25 @@ public class Parent {
         this.name = name;
     }
 
-    public Set<Child> getChildren() {
-        return children;
+    public Set<Child> getChildrenLazy() {
+        return childrenLazy;
     }
 
-    public void setChildren(Set<Child> children) {
-        this.children = children;
+    public void setChildrenLazy(Set<Child> childrenLazy) {
+        this.childrenLazy = childrenLazy;
+    }
+
+    public List<Child> getChildrenEager() {
+        return childrenEager;
+    }
+
+    public void setChildrenEager(List<Child> childrenEager) {
+        this.childrenEager = childrenEager;
+    }
+
+    @Override
+    public String toString() {
+        return "Parent: " + name;
     }
 
 }

@@ -58,4 +58,9 @@ public class Child {
         this.age = age;
     }
 
+    @Override
+    public String toString() {
+        return "Child: " + name;
+    }
+
 }

@@ -17,7 +17,7 @@ public class HibernateTools {
         return em;
     }
 
-    private synchronized static EntityManagerFactory getEntityManagerFactory() {
+    public synchronized static EntityManagerFactory getEntityManagerFactory() {
         if (emf == null || !emf.isOpen()) {
             Map<String, Object> properties = new HashMap<>();
 
