@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -29,6 +30,10 @@ public class Parent {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "gender")
+    @Convert(converter = Gender.Converter.class)
+    private Gender gender;
+
     @OneToMany(mappedBy = "parent")
     private Set<Child> childrenLazy = new LinkedHashSet<>();
 
@@ -41,6 +46,7 @@ public class Parent {
     public Parent(Parent other) {
         this.parentId = other.parentId;
         this.name = other.name;
+        this.gender = other.gender;
         this.childrenLazy.addAll(other.childrenLazy);
         this.childrenEager.addAll(other.childrenEager);
     }
@@ -55,6 +61,14 @@ public class Parent {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
     }
 
     public Set<Child> getChildrenLazy() {

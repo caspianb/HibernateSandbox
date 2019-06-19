@@ -1,5 +1,6 @@
 import entity.Child;
 import entity.Customer;
+import entity.Gender;
 import entity.Parent;
 
 import java.util.LinkedHashSet;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -35,6 +37,18 @@ public class HibernateTests {
         em.getTransaction().rollback();
         em.close();
         HibernateTools.getEntityManagerFactory().close();
+    }
+
+    @Test
+    public void testEnumConversion() {
+        Set<Integer> parentIds = createTestData(2, 2);
+        Integer parentId = parentIds.iterator().next();
+        em.clear();
+
+        em.createNativeQuery("update parent SET gender = 'm' where 1=1").executeUpdate();
+
+        Parent parent = em.find(Parent.class, parentId);
+        Assert.assertEquals(Gender.MALE, parent.getGender());
     }
 
     @Test
