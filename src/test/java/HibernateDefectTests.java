@@ -8,14 +8,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HibernateTests {
+public class HibernateDefectTests {
 
     private Logger log = LoggerFactory.getLogger(HibernateTests.class);
 
@@ -62,6 +64,73 @@ public class HibernateTests {
         });
 
         log.info("Merge complete.");
+    }
+
+    @Test
+    public void testManyToOneEagerMapping() {
+        Set<Integer> parentIds = createTestData(1, 5);
+        int parentId = parentIds.iterator().next();
+
+        // Retrieve parent from session cache and refresh prior to clear - we'll see only 5 children
+        Parent parent = em.find(Parent.class, parentId);
+        em.refresh(parent);
+        Assert.assertEquals(5, parent.getChildrenEager().size());
+
+        // However, after clearing and forcing a reload... things go wonky.
+        // This only occurs if batch fetching is enabled!
+        em.clear();
+        parent = em.find(Parent.class, parentId);
+        Assert.assertEquals(5, parent.getChildrenEager().size());
+    }
+
+    @Test
+    public void testLazyCollectionAfterBatchFetchRefreshLock() {
+
+        // Create some test data
+        Set<Integer> parentIds = createTestData(5, 2);
+        int parentId = parentIds.iterator().next();
+
+        // Clear the session
+        em.clear();
+
+        // Retrieve one of the parents into the session.
+        Parent parent = em.find(Parent.class, parentId);
+        Assert.assertNotNull(parent);
+
+        // Retrieve children but keep their parents lazy!
+        // This allows batch fetching to do its thing when we refresh below.
+        em.createQuery("FROM Child").getResultList();
+
+        em.refresh(parent, LockModeType.PESSIMISTIC_WRITE);
+
+        // Another interesting thing to note - em.getLockMode returns an incorrect value after the above refresh
+        Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
+
+        // Just something to force delazification of children on parent entity
+        // The parent is obviously attached to the session (we just refreshed it!)
+        parent.getChildrenLazy().size();
+    }
+
+    @Test
+    public void testLockModeAfterRefresh() {
+        Integer customerId = null;
+
+        {
+            // Create a record in DB
+            Customer customer = createCustomer("John Doe");
+            customerId = customer.getCustomerId();
+            em.clear();
+        }
+
+        {
+            // Retrieve record with lock
+            Customer customer = em.find(Customer.class, customerId, LockModeType.PESSIMISTIC_WRITE);
+            Assert.assertNotNull(customer);
+            Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
+
+            em.refresh(customer);
+            Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
+        }
     }
 
     // ************************************************************************
