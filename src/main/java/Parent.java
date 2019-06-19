@@ -33,6 +33,16 @@ public class Parent {
     @OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
     private List<Child> childrenEager = new ArrayList<>();
 
+    public Parent() {
+    }
+
+    public Parent(Parent other) {
+        this.parentId = other.parentId;
+        this.name = other.name;
+        this.childrenLazy.addAll(other.childrenLazy);
+        this.childrenEager.addAll(other.childrenEager);
+    }
+
     public int getParentId() {
         return parentId;
     }

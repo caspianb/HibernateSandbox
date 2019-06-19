@@ -30,6 +30,15 @@ public class Child {
     @Column(name = "age")
     private int age;
 
+    public Child() {
+    }
+
+    public Child(Child other) {
+        this.childId = other.childId;
+        this.name = other.name;
+        this.parent = other.parent;
+    }
+
     public int getChildId() {
         return childId;
     }
