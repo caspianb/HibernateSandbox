@@ -3,16 +3,16 @@ package entity;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.DynamicUpdate;
@@ -23,7 +23,6 @@ import org.hibernate.annotations.DynamicUpdate;
 public class Parent {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "parent_id")
     private int parentId;
 
@@ -35,9 +34,11 @@ public class Parent {
     private Gender gender;
 
     @OneToMany(mappedBy = "parent")
+    @OrderBy("childId ASC")
     private Set<Child> childrenLazy = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
+    @OrderBy("childId ASC")
     private List<Child> childrenEager = new ArrayList<>();
 
     public Parent() {
@@ -49,6 +50,10 @@ public class Parent {
         this.gender = other.gender;
         this.childrenLazy.addAll(other.childrenLazy);
         this.childrenEager.addAll(other.childrenEager);
+    }
+
+    public void setParentId(int parentId) {
+        this.parentId = parentId;
     }
 
     public int getParentId() {
@@ -88,8 +93,23 @@ public class Parent {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Parent)) return false;
+        Parent parent = (Parent) o;
+        return parentId == parent.parentId &&
+                Objects.equals(name, parent.name) &&
+                gender == parent.gender;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parentId, name, gender);
+    }
+
+    @Override
     public String toString() {
-        return "Parent: " + name;
+        return String.format("Parent [%s]: %s", parentId, name);
     }
 
 }

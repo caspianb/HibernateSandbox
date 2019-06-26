@@ -3,6 +3,7 @@ import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.FlushModeType;
 import javax.persistence.Persistence;
 
 import org.hibernate.cfg.AvailableSettings;
@@ -28,6 +29,7 @@ public class HibernateTools {
             //properties.put(AvailableSettings.HBM2DDL_AUTO, Action.CREATE_DROP);
             properties.put(AvailableSettings.HBM2DDL_AUTO, "create-drop");
 
+            properties.put(AvailableSettings.FLUSH_MODE, FlushModeType.AUTO);
             properties.put(AvailableSettings.DEFAULT_BATCH_FETCH_SIZE, 8);
 
             properties.put(AvailableSettings.JPA_JDBC_DRIVER, "org.hsqldb.jdbcDriver");

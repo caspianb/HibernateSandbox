@@ -2,8 +2,6 @@ package entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -15,12 +13,15 @@ import org.hibernate.annotations.DynamicUpdate;
 public class Customer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "cust_id")
     private int customerId;
 
     @Column(name = "name")
     private String name;
+
+    public void setCustomerId(int customerId) {
+        this.customerId = customerId;
+    }
 
     public int getCustomerId() {
         return customerId;

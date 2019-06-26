@@ -1,6 +1,7 @@
 package entity;
 
 public enum Gender implements BaseEnum {
+    UNKNOWN,
     MALE,
     FEMALE;
 

@@ -3,9 +3,7 @@ import entity.Customer;
 import entity.Parent;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
@@ -37,33 +35,6 @@ public class HibernateDefectTests {
         em.getTransaction().rollback();
         em.close();
         HibernateTools.getEntityManagerFactory().close();
-    }
-
-    @Test
-    public void testHibernateMerge() {
-        // Put some test data into the database and clear the session
-        Set<Integer> parentIds = createTestData(1, 3);
-        em.clear();
-
-        int parentId = parentIds.iterator().next();
-        Parent parent = em.find(Parent.class, parentId);
-        Set<Child> children = parent.getChildrenLazy();
-
-        // Create new unattached children objects with different names
-        List<Child> copies = children.stream()
-                .map(child -> {
-                    Child copy = new Child(child);
-                    copy.setName("John" + child.getChildId());
-                    return copy;
-                })
-                .collect(Collectors.toList());
-
-        log.info("Merging copies into session...");
-        copies.forEach(copy -> {
-            em.merge(copy);
-        });
-
-        log.info("Merge complete.");
     }
 
     @Test
@@ -113,12 +84,11 @@ public class HibernateDefectTests {
 
     @Test
     public void testLockModeAfterRefresh() {
-        Integer customerId = null;
+        int customerId = 0;
 
         {
             // Create a record in DB
-            Customer customer = createCustomer("John Doe");
-            customerId = customer.getCustomerId();
+            Customer customer = createCustomer(customerId, "John Doe");
             em.clear();
         }
 
@@ -144,22 +114,23 @@ public class HibernateDefectTests {
         //
         // Prep some data in the DB
         //
-        for (int i = 0; i < numParents; i++) {
-            Parent parent = createParent("Parent_" + i);
-            int parentId = parent.getParentId();
+        for (int parentId = 0; parentId < numParents; parentId++) {
+            Parent parent = createParent(parentId, "Parent_" + parentId);
             parentIds.add(parentId);
 
             // Create some children for each parent...
-            for (int j = 0; j < childrenPerParent; j++) {
-                createChild("Child_" + i + "_" + j, 15, parent);
+            for (int i = 0; i < childrenPerParent; i++) {
+                int childId = parentId * childrenPerParent + i;
+                createChild(childId, "Child_" + parentId + "_" + i, 15, parent);
             }
         }
 
         return parentIds;
     }
 
-    protected Customer createCustomer(String name) {
+    protected Customer createCustomer(int customerId, String name) {
         Customer customer = new Customer();
+        customer.setCustomerId(customerId);
         customer.setName("John Doe");
 
         em.persist(customer);
@@ -167,8 +138,9 @@ public class HibernateDefectTests {
         return customer;
     }
 
-    protected Parent createParent(String name) {
+    protected Parent createParent(int parentId, String name) {
         Parent parent = new Parent();
+        parent.setParentId(parentId);
         parent.setName(name);
 
         em.persist(parent);
@@ -176,8 +148,9 @@ public class HibernateDefectTests {
         return parent;
     }
 
-    protected Child createChild(String name, int age, Parent parent) {
+    protected Child createChild(int childId, String name, int age, Parent parent) {
         Child child = new Child();
+        child.setChildId(childId);
         child.setName(name);
         child.setAge(age);
         child.setParent(parent);

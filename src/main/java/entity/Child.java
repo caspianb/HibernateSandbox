@@ -1,10 +1,10 @@
 package entity;
 
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -18,9 +18,8 @@ import org.hibernate.annotations.DynamicUpdate;
 public class Child {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "child_id")
-    private int childId;
+    private Integer childId;
 
     @Column(name = "name")
     private String name;
@@ -43,6 +42,10 @@ public class Child {
 
     public int getChildId() {
         return childId;
+    }
+
+    public void setChildId(int childId) {
+        this.childId = childId;
     }
 
     public String getName() {
@@ -70,8 +73,24 @@ public class Child {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Child)) return false;
+        Child child = (Child) o;
+        return age == child.age &&
+                Objects.equals(childId, child.childId) &&
+                Objects.equals(name, child.name) &&
+                Objects.equals(parent, child.parent);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(childId, name, parent, age);
+    }
+
+    @Override
     public String toString() {
-        return "Child: " + name;
+        return String.format("Child [%s]: %s", childId, name);
     }
 
 }

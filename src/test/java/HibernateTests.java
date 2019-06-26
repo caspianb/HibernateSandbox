@@ -3,6 +3,7 @@ import entity.Customer;
 import entity.Gender;
 import entity.Parent;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,9 +32,15 @@ public class HibernateTests {
 
     @After
     public void testEnd() {
-        log.info("Flushing changes before rollback...");
-        em.flush();
+        try {
+            log.info("Flushing changes before rollback...");
+            em.flush();
+        }
+        catch (Exception e) {
+            log.error("Exception detected on flush: ", e);
+        }
         log.info("******************************* TEST END *******************************");
+        em.clear();
         em.getTransaction().rollback();
         em.close();
         HibernateTools.getEntityManagerFactory().close();
@@ -49,6 +56,115 @@ public class HibernateTests {
 
         Parent parent = em.find(Parent.class, parentId);
         Assert.assertEquals(Gender.MALE, parent.getGender());
+
+        parent.setGender(Gender.UNKNOWN);
+        em.flush();
+        em.clear();
+
+        parent = em.find(Parent.class, parentId);
+        Assert.assertEquals(Gender.UNKNOWN, parent.getGender());
+    }
+
+    @Test
+    public void testReKeyChildrenCollectionViaDelete() {
+        Set<Integer> parentIds = createTestData(1, 5);
+        em.clear();
+
+        int parentId = parentIds.iterator().next();
+        Parent parent = em.find(Parent.class, parentId);
+        List<Child> children = new ArrayList<>(parent.getChildrenEager());
+
+        int firstChildId = children.get(0).getChildId();
+
+        log.info("DELETING ENTITIES");
+        children.forEach(em::remove);
+
+        // Required to force deletes to sync to DB now
+        // otherwise persists below might encounter duplicate ID exceptions
+        em.flush();
+
+        log.info("CHANGING KEYS AND REINSERTING");
+        // Update IDs of all children objects and re-merge into session
+        children.stream()
+                .peek(child -> child.setChildId(child.getChildId() + 1))
+                .forEach(em::persist);
+
+        log.info("CREATING NEW ELEMENT AT FRONT OF LIST");
+        // Add new child at front of list
+        Child newChild = new Child();
+        newChild.setChildId(firstChildId);
+        newChild.setName("First");
+        newChild.setAge(23);
+        newChild.setParent(parent);
+
+        em.persist(newChild);
+        children.add(0, newChild);
+
+        // Force persist inserts to database prior to refreshing parent entity
+        em.flush();
+        em.refresh(parent);
+
+        // Our lists shold contain equal elements still
+        Assert.assertEquals(children, parent.getChildrenEager());
+
+        // Not only that, if we kept them in sync they should be the EXACT SAME entity objects
+        for (int i = 0; i < children.size(); i++) {
+            Assert.assertSame(children.get(i), parent.getChildrenEager().get(i));
+        }
+    }
+
+    @Test
+    public void testReKeyChildrenCollectionViaEvict() {
+        Set<Integer> parentIds = createTestData(1, 5);
+        em.clear();
+
+        int parentId = parentIds.iterator().next();
+        Parent parent = em.find(Parent.class, parentId);
+        List<Child> children = new ArrayList<>(parent.getChildrenEager());
+
+        int firstChildId = children.get(0).getChildId();
+
+        log.info("DETACHING ENTITIES");
+        children.forEach(em::detach);
+
+        log.info("CHANGING KEYS AND MERGING");
+        // Update IDs of all children objects and re-merge into session
+        List<Child> mergedList = children.stream()
+                .peek(child -> child.setChildId(child.getChildId() + 1))
+                .map(em::merge)
+                .collect(Collectors.toList());
+
+        log.info("CREATING NEW ELEMENT AT FRONT OF LIST");
+        // Add new child at front of list
+        Child newChild = new Child();
+        newChild.setChildId(firstChildId);
+        newChild.setName("First");
+        newChild.setAge(23);
+        newChild.setParent(parent);
+
+        children.add(0, newChild);
+
+        Child mergedChild = em.merge(newChild);
+        mergedList.add(0, mergedChild);
+
+        // Force updates/inserts to database prior to refreshing parent entity
+        em.flush();
+        em.refresh(parent);
+
+        // Both lists should contain "equal" elements still
+        Assert.assertEquals(children, parent.getChildrenEager());
+        Assert.assertEquals(mergedList, parent.getChildrenEager());
+
+        // However, the entities we started with are NOT the same entities after the merge!
+        // This is because merge would have created new persistent entities for us.
+        for (int i = 0; i < children.size(); i++) {
+            Assert.assertNotSame(children.get(i), parent.getChildrenEager().get(i));
+        }
+
+        // This is why our MERGED LIST is the same objects we get off the parent entity.
+        for (int i = 0; i < mergedList.size(); i++) {
+            Assert.assertSame(mergedList.get(i), parent.getChildrenEager().get(i));
+        }
     }
 
     @Test
@@ -70,12 +186,15 @@ public class HibernateTests {
                 })
                 .collect(Collectors.toList());
 
+        parent.getChildrenEager().stream().map(Child::toString).forEach(log::info);
+
         log.info("Merging copies into session...");
         copies.forEach(copy -> {
             em.merge(copy);
         });
 
         log.info("Merge complete.");
+        parent.getChildrenEager().stream().map(Child::toString).forEach(log::info);
     }
 
     // ************************************************************************
@@ -89,22 +208,23 @@ public class HibernateTests {
         //
         // Prep some data in the DB
         //
-        for (int i = 0; i < numParents; i++) {
-            Parent parent = createParent("Parent_" + i);
-            int parentId = parent.getParentId();
+        for (int parentId = 0; parentId < numParents; parentId++) {
+            Parent parent = createParent(parentId, "Parent_" + parentId);
             parentIds.add(parentId);
 
             // Create some children for each parent...
-            for (int j = 0; j < childrenPerParent; j++) {
-                createChild("Child_" + i + "_" + j, 15, parent);
+            for (int i = 0; i < childrenPerParent; i++) {
+                int childId = parentId * childrenPerParent + i;
+                createChild(childId, "Child_" + parentId + "_" + i, 15, parent);
             }
         }
 
         return parentIds;
     }
 
-    protected Customer createCustomer(String name) {
+    protected Customer createCustomer(int customerId, String name) {
         Customer customer = new Customer();
+        customer.setCustomerId(customerId);
         customer.setName("John Doe");
 
         em.persist(customer);
@@ -112,8 +232,9 @@ public class HibernateTests {
         return customer;
     }
 
-    protected Parent createParent(String name) {
+    protected Parent createParent(int parentId, String name) {
         Parent parent = new Parent();
+        parent.setParentId(parentId);
         parent.setName(name);
 
         em.persist(parent);
@@ -121,8 +242,9 @@ public class HibernateTests {
         return parent;
     }
 
-    protected Child createChild(String name, int age, Parent parent) {
+    protected Child createChild(int childId, String name, int age, Parent parent) {
         Child child = new Child();
+        child.setChildId(childId);
         child.setName(name);
         child.setAge(age);
         child.setParent(parent);
