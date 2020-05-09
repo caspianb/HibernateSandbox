@@ -3,6 +3,7 @@
 /.gradle/
 /.idea/
 /.settings/
+/out/
 
 .project
 .classpath

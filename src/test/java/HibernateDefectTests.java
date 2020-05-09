@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 public class HibernateDefectTests {
 
-    private Logger log = LoggerFactory.getLogger(HibernateTests.class);
+    private Logger log = LoggerFactory.getLogger(HibernateDefectTests.class);
 
     private EntityManager em;
 
@@ -37,6 +37,11 @@ public class HibernateDefectTests {
         HibernateTools.getEntityManagerFactory().close();
     }
 
+    /**
+     * 5.2.12 - PASS
+     * 5.3.17 - PASS
+     * 5.4.15 - PASS
+     */
     @Test
     public void testManyToOneEagerMapping() {
         Set<Integer> parentIds = createTestData(1, 5);
@@ -54,6 +59,12 @@ public class HibernateDefectTests {
         Assert.assertEquals(5, parent.getChildrenEager().size());
     }
 
+    /**
+     * https://hibernate.atlassian.net/browse/HHH-12268
+     * 5.2.12 - FAIL
+     * 5.3.17 - FAIL
+     * 5.4.15 - FAIL
+     */
     @Test
     public void testLazyCollectionAfterBatchFetchRefreshLock() {
 
@@ -74,14 +85,20 @@ public class HibernateDefectTests {
 
         em.refresh(parent, LockModeType.PESSIMISTIC_WRITE);
 
-        // Another interesting thing to note - em.getLockMode returns an incorrect value after the above refresh
-        Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
+        // TODO Another interesting thing to note - em.getLockMode returns an incorrect value after the above refresh
+        // Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
 
         // Just something to force delazification of children on parent entity
         // The parent is obviously attached to the session (we just refreshed it!)
         parent.getChildrenLazy().size();
     }
 
+    /**
+     * https://hibernate.atlassian.net/browse/HHH-13270
+     * 5.2.12 - FAIL
+     * 5.3.17 - PASS
+     * 5.4.15 - PASS
+     */
     @Test
     public void testLockModeAfterRefresh() {
         int customerId = 0;
@@ -103,12 +120,46 @@ public class HibernateDefectTests {
         }
     }
 
+    /**
+     * https://hibernate.atlassian.net/browse/??
+     * 5.3.17 - FAIL
+     * 5.4.15 - FAIL
+     */
+    @Test
+    public void testSharedCollectionExceptionAfterLockRefreshAndFlush() {
+        // Create some test data and clear the session
+        createTestData(3, 2);
+        em.clear();
+
+        // Read in parent0 first.
+        Parent parent0 = em.find(Parent.class, 0);
+
+        // Read in some a random children record NOT for parent0 (id > 2), but don't delazify it
+        log.info("READING IN CHILD WITH LAZY PARENT SET ON IT.");
+        Child otherChild = em.find(Child.class, 5);
+
+        // Lock and refresh parent0; batch fetching will kick in and cause duplication of parent0 in session cache
+        log.info("LOCKING AND REFRESHING PARENT-0; BATCH FETCH FOR PARENT2 SHOULD KICK IN");
+        em.lock(parent0, LockModeType.PESSIMISTIC_WRITE);
+        em.refresh(parent0);
+
+        // Read in a child which points to parent0; then refresh parent0
+        // The problem here, is child will get a reference to the *new* duplicate entity in the cache above
+        Child child = em.find(Child.class, 0);
+
+        // Refresh the original parent, reconnecting it to the session
+        em.refresh(parent0);
+
+        // And blow up with completely misleading error message
+        em.flush();
+    }
+
     // ************************************************************************
     // Helpers to create test data defined below
     // ************************************************************************
 
     protected Set<Integer> createTestData(int numParents, int childrenPerParent) {
-
+        log.info("******************** CREATE TEST DATA ********************");
         Set<Integer> parentIds = new LinkedHashSet<>();
 
         //
@@ -125,6 +176,7 @@ public class HibernateDefectTests {
             }
         }
 
+        log.info("******************** DONE TEST DATA ********************");
         return parentIds;
     }
 

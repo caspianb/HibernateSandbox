@@ -202,7 +202,7 @@ public class HibernateTests {
     // ************************************************************************
 
     protected Set<Integer> createTestData(int numParents, int childrenPerParent) {
-
+        log.info("******************** CREATE TEST DATA ********************");
         Set<Integer> parentIds = new LinkedHashSet<>();
 
         //
@@ -219,6 +219,7 @@ public class HibernateTests {
             }
         }
 
+        log.info("******************** DONE TEST DATA ********************");
         return parentIds;
     }
 
