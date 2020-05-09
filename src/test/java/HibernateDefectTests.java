@@ -1,5 +1,4 @@
 import entity.Child;
-import entity.Customer;
 import entity.Parent;
 
 import java.util.LinkedHashSet;
@@ -38,28 +37,6 @@ public class HibernateDefectTests {
     }
 
     /**
-     * 5.2.12 - PASS
-     * 5.3.17 - PASS
-     * 5.4.15 - PASS
-     */
-    @Test
-    public void testManyToOneEagerMapping() {
-        Set<Integer> parentIds = createTestData(1, 5);
-        int parentId = parentIds.iterator().next();
-
-        // Retrieve parent from session cache and refresh prior to clear - we'll see only 5 children
-        Parent parent = em.find(Parent.class, parentId);
-        em.refresh(parent);
-        Assert.assertEquals(5, parent.getChildrenEager().size());
-
-        // However, after clearing and forcing a reload... things go wonky.
-        // This only occurs if batch fetching is enabled!
-        em.clear();
-        parent = em.find(Parent.class, parentId);
-        Assert.assertEquals(5, parent.getChildrenEager().size());
-    }
-
-    /**
      * https://hibernate.atlassian.net/browse/HHH-12268
      * 5.2.12 - FAIL
      * 5.3.17 - FAIL
@@ -94,36 +71,9 @@ public class HibernateDefectTests {
     }
 
     /**
-     * https://hibernate.atlassian.net/browse/HHH-13270
-     * 5.2.12 - FAIL
-     * 5.3.17 - PASS
-     * 5.4.15 - PASS
-     */
-    @Test
-    public void testLockModeAfterRefresh() {
-        int customerId = 0;
-
-        {
-            // Create a record in DB
-            Customer customer = createCustomer(customerId, "John Doe");
-            em.clear();
-        }
-
-        {
-            // Retrieve record with lock
-            Customer customer = em.find(Customer.class, customerId, LockModeType.PESSIMISTIC_WRITE);
-            Assert.assertNotNull(customer);
-            Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
-
-            em.refresh(customer);
-            Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
-        }
-    }
-
-    /**
-     * https://hibernate.atlassian.net/browse/??
+     * https://hibernate.atlassian.net/browse/HHH-14008
      * 5.3.17 - FAIL
-     * 5.4.15 - FAIL
+     * 5.4.15 - PASS
      */
     @Test
     public void testSharedCollectionExceptionAfterLockRefreshAndFlush() {
@@ -178,16 +128,6 @@ public class HibernateDefectTests {
 
         log.info("******************** DONE TEST DATA ********************");
         return parentIds;
-    }
-
-    protected Customer createCustomer(int customerId, String name) {
-        Customer customer = new Customer();
-        customer.setCustomerId(customerId);
-        customer.setName("John Doe");
-
-        em.persist(customer);
-        em.flush();
-        return customer;
     }
 
     protected Parent createParent(int parentId, String name) {
