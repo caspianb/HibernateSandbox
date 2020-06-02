@@ -1,5 +1,8 @@
 package entity;
 
+import entity.util.BaseEnum;
+import entity.util.BaseEnumConverter;
+
 public enum Gender implements BaseEnum {
     UNKNOWN,
     MALE,

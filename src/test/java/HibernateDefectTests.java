@@ -1,5 +1,4 @@
 import entity.Child;
-import entity.Customer;
 import entity.Parent;
 
 import java.util.LinkedHashSet;
@@ -101,17 +100,17 @@ public class HibernateDefectTests {
      */
     @Test
     public void testLockModeAfterRefresh() {
-        int customerId = 0;
+        int parentId = 0;
 
         {
             // Create a record in DB
-            Customer customer = createCustomer(customerId, "John Doe");
+            Parent parent = createParent(parentId, "Parent Name");
             em.clear();
         }
 
         {
             // Retrieve record with lock
-            Customer customer = em.find(Customer.class, customerId, LockModeType.PESSIMISTIC_WRITE);
+            Parent customer = em.find(Parent.class, parentId, LockModeType.PESSIMISTIC_WRITE);
             Assert.assertNotNull(customer);
             Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
 
@@ -178,16 +177,6 @@ public class HibernateDefectTests {
 
         log.info("******************** DONE TEST DATA ********************");
         return parentIds;
-    }
-
-    protected Customer createCustomer(int customerId, String name) {
-        Customer customer = new Customer();
-        customer.setCustomerId(customerId);
-        customer.setName("John Doe");
-
-        em.persist(customer);
-        em.flush();
-        return customer;
     }
 
     protected Parent createParent(int parentId, String name) {

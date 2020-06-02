@@ -1,5 +1,4 @@
 import entity.Child;
-import entity.Customer;
 import entity.Gender;
 import entity.Parent;
 
@@ -221,16 +220,6 @@ public class HibernateTests {
 
         log.info("******************** DONE TEST DATA ********************");
         return parentIds;
-    }
-
-    protected Customer createCustomer(int customerId, String name) {
-        Customer customer = new Customer();
-        customer.setCustomerId(customerId);
-        customer.setName("John Doe");
-
-        em.persist(customer);
-        em.flush();
-        return customer;
     }
 
     protected Parent createParent(int parentId, String name) {

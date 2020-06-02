@@ -1,4 +1,4 @@
-package entity;
+package entity.util;
 
 public interface BaseEnum {
     String getDbValue();
