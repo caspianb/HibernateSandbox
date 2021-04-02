@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 public class HibernateDefectTests {
 
-    private Logger log = LoggerFactory.getLogger(HibernateDefectTests.class);
+    private static final Logger log = LoggerFactory.getLogger(HibernateDefectTests.class);
 
     private EntityManager em;
 
@@ -40,6 +40,7 @@ public class HibernateDefectTests {
      * 5.2.12 - PASS
      * 5.3.17 - PASS
      * 5.4.15 - PASS
+     * 5.4.20 - PASS
      */
     @Test
     public void testManyToOneEagerMapping() {
@@ -63,6 +64,7 @@ public class HibernateDefectTests {
      * 5.2.12 - FAIL
      * 5.3.17 - FAIL
      * 5.4.15 - FAIL
+     * 5.4.20 - PASS
      */
     @Test
     public void testLazyCollectionAfterBatchFetchRefreshLock() {
@@ -97,6 +99,7 @@ public class HibernateDefectTests {
      * 5.2.12 - FAIL
      * 5.3.17 - PASS
      * 5.4.15 - PASS
+     * 5.4.20 - PASS
      */
     @Test
     public void testLockModeAfterRefresh() {
@@ -120,9 +123,10 @@ public class HibernateDefectTests {
     }
 
     /**
-     * https://hibernate.atlassian.net/browse/??
+     * https://hibernate.atlassian.net/browse/HHH-14008
      * 5.3.17 - FAIL
-     * 5.4.15 - FAIL
+     * 5.4.15 - PASS
+     * 5.4.20 - PASS
      */
     @Test
     public void testSharedCollectionExceptionAfterLockRefreshAndFlush() {

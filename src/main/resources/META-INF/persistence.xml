@@ -4,5 +4,6 @@
         <class>entity.Parent</class>
         <class>entity.Child</class>
         <class>entity.Customer</class>
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
     </persistence-unit>
 </persistence>
