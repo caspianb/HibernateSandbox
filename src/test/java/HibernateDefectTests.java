@@ -1,11 +1,10 @@
 import entity.Child;
 import entity.Parent;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import javax.persistence.EntityManager;
-import javax.persistence.LockModeType;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -87,7 +86,7 @@ public class HibernateDefectTests {
         em.refresh(parent, LockModeType.PESSIMISTIC_WRITE);
 
         // TODO Another interesting thing to note - em.getLockMode returns an incorrect value after the above refresh
-        // Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
+        Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
 
         // Just something to force delazification of children on parent entity
         // The parent is obviously attached to the session (we just refreshed it!)

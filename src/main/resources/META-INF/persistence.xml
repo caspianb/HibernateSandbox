@@ -3,7 +3,7 @@
     <persistence-unit name="test" transaction-type="RESOURCE_LOCAL">
         <class>entity.Parent</class>
         <class>entity.Child</class>
-        <class>entity.Customer</class>
+        <class>entity.LargeEntity</class>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
     </persistence-unit>
 </persistence>

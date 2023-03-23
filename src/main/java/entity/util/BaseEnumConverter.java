@@ -1,6 +1,6 @@
 package entity.util;
 
-import javax.persistence.AttributeConverter;
+import jakarta.persistence.AttributeConverter;
 
 public abstract class BaseEnumConverter<E extends Enum<E> & BaseEnum> implements AttributeConverter<E, String> {
 

@@ -1,14 +1,13 @@
 import entity.Child;
 import entity.Gender;
 import entity.Parent;
+import jakarta.persistence.EntityManager;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.persistence.EntityManager;
 
 import org.junit.After;
 import org.junit.Assert;
