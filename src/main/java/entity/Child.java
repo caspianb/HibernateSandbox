@@ -13,7 +13,7 @@ import java.util.Objects;
 import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
-@DynamicUpdate(true)
+@DynamicUpdate
 @Table(name = "child")
 public class Child {
 

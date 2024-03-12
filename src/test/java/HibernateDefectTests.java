@@ -2,31 +2,27 @@ import entity.Child;
 import entity.Parent;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
+@Slf4j
 public class HibernateDefectTests {
 
-    private static final Logger log = LoggerFactory.getLogger(HibernateDefectTests.class);
+    private final EntityManager em;
 
-    private EntityManager em;
-
-    @Before
-    public void testSetup() {
-        em = HibernateTools.getEntityManager();
+    HibernateDefectTests() {
+        this.em = HibernateTools.getEntityManager();
         log.info("****************************** TEST START ******************************");
     }
 
-    @After
-    public void testEnd() {
+    @AfterEach
+    void testEnd() {
         log.info("Flushing changes before rollback...");
         em.flush();
         log.info("******************************* TEST END *******************************");
@@ -42,20 +38,20 @@ public class HibernateDefectTests {
      * 5.4.20 - PASS
      */
     @Test
-    public void testManyToOneEagerMapping() {
+    void testManyToOneEagerMapping() {
         Set<Integer> parentIds = createTestData(1, 5);
         int parentId = parentIds.iterator().next();
 
         // Retrieve parent from session cache and refresh prior to clear - we'll see only 5 children
         Parent parent = em.find(Parent.class, parentId);
         em.refresh(parent);
-        Assert.assertEquals(5, parent.getChildrenEager().size());
+        Assertions.assertEquals(5, parent.getChildrenEager().size());
 
         // However, after clearing and forcing a reload... things go wonky.
         // This only occurs if batch fetching is enabled!
         em.clear();
         parent = em.find(Parent.class, parentId);
-        Assert.assertEquals(5, parent.getChildrenEager().size());
+        Assertions.assertEquals(5, parent.getChildrenEager().size());
     }
 
     /**
@@ -66,7 +62,7 @@ public class HibernateDefectTests {
      * 5.4.20 - PASS
      */
     @Test
-    public void testLazyCollectionAfterBatchFetchRefreshLock() {
+    void testLazyCollectionAfterBatchFetchRefreshLock() {
 
         // Create some test data
         Set<Integer> parentIds = createTestData(5, 2);
@@ -77,7 +73,7 @@ public class HibernateDefectTests {
 
         // Retrieve one of the parents into the session.
         Parent parent = em.find(Parent.class, parentId);
-        Assert.assertNotNull(parent);
+        Assertions.assertNotNull(parent);
 
         // Retrieve children but keep their parents lazy!
         // This allows batch fetching to do its thing when we refresh below.
@@ -86,7 +82,7 @@ public class HibernateDefectTests {
         em.refresh(parent, LockModeType.PESSIMISTIC_WRITE);
 
         // TODO Another interesting thing to note - em.getLockMode returns an incorrect value after the above refresh
-        Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
+        Assertions.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
 
         // Just something to force delazification of children on parent entity
         // The parent is obviously attached to the session (we just refreshed it!)
@@ -101,7 +97,7 @@ public class HibernateDefectTests {
      * 5.4.20 - PASS
      */
     @Test
-    public void testLockModeAfterRefresh() {
+    void testLockModeAfterRefresh() {
         int parentId = 0;
 
         {
@@ -113,11 +109,11 @@ public class HibernateDefectTests {
         {
             // Retrieve record with lock
             Parent customer = em.find(Parent.class, parentId, LockModeType.PESSIMISTIC_WRITE);
-            Assert.assertNotNull(customer);
-            Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
+            Assertions.assertNotNull(customer);
+            Assertions.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
 
             em.refresh(customer);
-            Assert.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
+            Assertions.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(customer));
         }
     }
 
@@ -128,7 +124,7 @@ public class HibernateDefectTests {
      * 5.4.20 - PASS
      */
     @Test
-    public void testSharedCollectionExceptionAfterLockRefreshAndFlush() {
+    void testSharedCollectionExceptionAfterLockRefreshAndFlush() {
         // Create some test data and clear the session
         createTestData(3, 2);
         em.clear();
@@ -160,7 +156,7 @@ public class HibernateDefectTests {
     // Helpers to create test data defined below
     // ************************************************************************
 
-    protected Set<Integer> createTestData(int numParents, int childrenPerParent) {
+    Set<Integer> createTestData(int numParents, int childrenPerParent) {
         log.info("******************** CREATE TEST DATA ********************");
         Set<Integer> parentIds = new LinkedHashSet<>();
 
@@ -182,7 +178,7 @@ public class HibernateDefectTests {
         return parentIds;
     }
 
-    protected Parent createParent(int parentId, String name) {
+    Parent createParent(int parentId, String name) {
         Parent parent = new Parent();
         parent.setParentId(parentId);
         parent.setName(name);
@@ -192,7 +188,7 @@ public class HibernateDefectTests {
         return parent;
     }
 
-    protected Child createChild(int childId, String name, int age, Parent parent) {
+    Child createChild(int childId, String name, int age, Parent parent) {
         Child child = new Child();
         child.setChildId(childId);
         child.setName(name);

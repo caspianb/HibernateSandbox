@@ -1,30 +1,26 @@
 import entity.LargeEntity;
 import jakarta.persistence.EntityManager;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
 
+@Slf4j
 public class HibernatePerformanceTest {
 
-    private Logger log = LoggerFactory.getLogger(HibernateTests.class);
+    private final EntityManager em;
 
-    private EntityManager em;
-
-    @Before
-    public void testSetup() {
-        em = HibernateTools.getEntityManager();
+    HibernatePerformanceTest() {
+        this.em = HibernateTools.getEntityManager();
         log.info("****************************** TEST START ******************************");
     }
 
     @Test
-    public void testPerformance() {
+    void testPerformance() {
         var numEntities = 100000;
 
         log.info("PERSISTING ALL ENTITIES");
@@ -32,11 +28,10 @@ public class HibernatePerformanceTest {
                 .mapToObj(this::generateEntity)
                 .toList();
         entities.forEach(em::persist);
-        em.flush();
-        log.info("DONE PERSISTING");
 
-        entities.clear();
+        em.flush();
         em.clear();
+        log.info("DONE PERSISTING");
 
         log.info("READING ALL ENTITIES");
         var allEntities = em.createQuery("SELECT e FROM LargeEntity e", LargeEntity.class)
@@ -44,7 +39,7 @@ public class HibernatePerformanceTest {
         log.info("DONE READING {}", allEntities.size());
     }
 
-    private LargeEntity generateEntity(int id) {
+    LargeEntity generateEntity(int id) {
         try {
             var entity = new LargeEntity();
             Field[] fields = entity.getClass().getDeclaredFields();

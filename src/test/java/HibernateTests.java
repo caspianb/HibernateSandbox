@@ -2,6 +2,7 @@ import entity.Child;
 import entity.Gender;
 import entity.Parent;
 import jakarta.persistence.EntityManager;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -9,27 +10,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
+@Slf4j
 public class HibernateTests {
 
-    private Logger log = LoggerFactory.getLogger(HibernateTests.class);
+    private final EntityManager em;
 
-    private EntityManager em;
-
-    @Before
-    public void testSetup() {
-        em = HibernateTools.getEntityManager();
+    HibernateTests() {
+        this.em = HibernateTools.getEntityManager();
         log.info("****************************** TEST START ******************************");
     }
 
-    @After
-    public void testEnd() {
+    @AfterEach
+    void testEnd() {
         try {
             log.info("Flushing changes before rollback...");
             em.flush();
@@ -45,7 +41,7 @@ public class HibernateTests {
     }
 
     @Test
-    public void testEnumConversion() {
+    void testEnumConversion() {
         Set<Integer> parentIds = createTestData(2, 2);
         Integer parentId = parentIds.iterator().next();
         em.clear();
@@ -53,18 +49,18 @@ public class HibernateTests {
         em.createNativeQuery("update parent SET gender = 'm' where 1=1").executeUpdate();
 
         Parent parent = em.find(Parent.class, parentId);
-        Assert.assertEquals(Gender.MALE, parent.getGender());
+        Assertions.assertEquals(Gender.MALE, parent.getGender());
 
         parent.setGender(Gender.UNKNOWN);
         em.flush();
         em.clear();
 
         parent = em.find(Parent.class, parentId);
-        Assert.assertEquals(Gender.UNKNOWN, parent.getGender());
+        Assertions.assertEquals(Gender.UNKNOWN, parent.getGender());
     }
 
     @Test
-    public void testReKeyChildrenCollectionViaDelete() {
+    void testReKeyChildrenCollectionViaDelete() {
         Set<Integer> parentIds = createTestData(1, 5);
         em.clear();
 
@@ -103,16 +99,16 @@ public class HibernateTests {
         em.refresh(parent);
 
         // Our lists shold contain equal elements still
-        Assert.assertEquals(children, parent.getChildrenEager());
+        Assertions.assertEquals(children, parent.getChildrenEager());
 
         // Not only that, if we kept them in sync they should be the EXACT SAME entity objects
         for (int i = 0; i < children.size(); i++) {
-            Assert.assertSame(children.get(i), parent.getChildrenEager().get(i));
+            Assertions.assertSame(children.get(i), parent.getChildrenEager().get(i));
         }
     }
 
     @Test
-    public void testReKeyChildrenCollectionViaEvict() {
+    void testReKeyChildrenCollectionViaEvict() {
         Set<Integer> parentIds = createTestData(1, 5);
         em.clear();
 
@@ -150,23 +146,23 @@ public class HibernateTests {
         em.refresh(parent);
 
         // Both lists should contain "equal" elements still
-        Assert.assertEquals(children, parent.getChildrenEager());
-        Assert.assertEquals(mergedList, parent.getChildrenEager());
+        Assertions.assertEquals(children, parent.getChildrenEager());
+        Assertions.assertEquals(mergedList, parent.getChildrenEager());
 
         // However, the entities we started with are NOT the same entities after the merge!
         // This is because merge would have created new persistent entities for us.
         for (int i = 0; i < children.size(); i++) {
-            Assert.assertNotSame(children.get(i), parent.getChildrenEager().get(i));
+            Assertions.assertNotSame(children.get(i), parent.getChildrenEager().get(i));
         }
 
         // This is why our MERGED LIST is the same objects we get off the parent entity.
         for (int i = 0; i < mergedList.size(); i++) {
-            Assert.assertSame(mergedList.get(i), parent.getChildrenEager().get(i));
+            Assertions.assertSame(mergedList.get(i), parent.getChildrenEager().get(i));
         }
     }
 
     @Test
-    public void testHibernateMerge() {
+    void testHibernateMerge() {
         // Put some test data into the database and clear the session
         Set<Integer> parentIds = createTestData(1, 3);
         em.clear();
@@ -199,7 +195,7 @@ public class HibernateTests {
     // Helpers to create test data defined below
     // ************************************************************************
 
-    protected Set<Integer> createTestData(int numParents, int childrenPerParent) {
+    Set<Integer> createTestData(int numParents, int childrenPerParent) {
         log.info("******************** CREATE TEST DATA ********************");
         Set<Integer> parentIds = new LinkedHashSet<>();
 
@@ -221,7 +217,7 @@ public class HibernateTests {
         return parentIds;
     }
 
-    protected Parent createParent(int parentId, String name) {
+    Parent createParent(int parentId, String name) {
         Parent parent = new Parent();
         parent.setParentId(parentId);
         parent.setName(name);
@@ -231,7 +227,7 @@ public class HibernateTests {
         return parent;
     }
 
-    protected Child createChild(int childId, String name, int age, Parent parent) {
+    Child createChild(int childId, String name, int age, Parent parent) {
         Child child = new Child();
         child.setChildId(childId);
         child.setName(name);

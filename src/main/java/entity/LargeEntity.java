@@ -9,7 +9,7 @@ import java.util.Objects;
 import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
-@DynamicUpdate(true)
+@DynamicUpdate
 @Table(name = "large_entity")
 public class LargeEntity {
 

@@ -18,7 +18,7 @@ import java.util.Set;
 import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
-@DynamicUpdate(true)
+@DynamicUpdate
 @Table(name = "parent")
 public class Parent {
 
