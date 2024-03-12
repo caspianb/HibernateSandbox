@@ -1,6 +1,5 @@
-import entity.Child;
-import entity.Gender;
-import entity.Parent;
+package com.logicalbias.jpa;
+
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 
@@ -8,11 +7,17 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import com.logicalbias.jpa.entity.Child;
+import com.logicalbias.jpa.entity.Gender;
+import com.logicalbias.jpa.entity.Parent;
+import com.logicalbias.jpa.entity.TestEntity;
 
 @Slf4j
 public class HibernateTests {
@@ -94,14 +99,14 @@ public class HibernateTests {
         em.persist(newChild);
         children.add(0, newChild);
 
-        // Force persist inserts to database prior to refreshing parent entity
+        // Force persist inserts to database prior to refreshing parent com.logicalbias.jpa.entity
         em.flush();
         em.refresh(parent);
 
         // Our lists shold contain equal elements still
         Assertions.assertEquals(children, parent.getChildrenEager());
 
-        // Not only that, if we kept them in sync they should be the EXACT SAME entity objects
+        // Not only that, if we kept them in sync they should be the EXACT SAME com.logicalbias.jpa.entity objects
         for (int i = 0; i < children.size(); i++) {
             Assertions.assertSame(children.get(i), parent.getChildrenEager().get(i));
         }
@@ -141,7 +146,7 @@ public class HibernateTests {
         Child mergedChild = em.merge(newChild);
         mergedList.add(0, mergedChild);
 
-        // Force updates/inserts to database prior to refreshing parent entity
+        // Force updates/inserts to database prior to refreshing parent com.logicalbias.jpa.entity
         em.flush();
         em.refresh(parent);
 
@@ -155,7 +160,7 @@ public class HibernateTests {
             Assertions.assertNotSame(children.get(i), parent.getChildrenEager().get(i));
         }
 
-        // This is why our MERGED LIST is the same objects we get off the parent entity.
+        // This is why our MERGED LIST is the same objects we get off the parent com.logicalbias.jpa.entity.
         for (int i = 0; i < mergedList.size(); i++) {
             Assertions.assertSame(mergedList.get(i), parent.getChildrenEager().get(i));
         }
@@ -178,17 +183,33 @@ public class HibernateTests {
                     copy.setName("John" + child.getChildId());
                     return copy;
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         parent.getChildrenEager().stream().map(Child::toString).forEach(log::info);
 
         log.info("Merging copies into session...");
-        copies.forEach(copy -> {
-            em.merge(copy);
-        });
+        copies.forEach(em::merge);
 
         log.info("Merge complete.");
         parent.getChildrenEager().stream().map(Child::toString).forEach(log::info);
+    }
+
+    @Test
+    void testManuallySetIdIsNotOverriddenByGeneratedValue() {
+        var testId = UUID.randomUUID();
+        log.info("MANUALLY GENERATED TEST ID: {}", testId);
+
+        var entity = new TestEntity().setId(testId);
+        em.merge(entity);
+
+        em.flush();
+        em.clear();
+
+        var persistedId = entity.getId();
+        Assertions.assertEquals(testId, persistedId);
+
+        entity = em.find(TestEntity.class, testId);
+        Assertions.assertNotNull(entity);
     }
 
     // ************************************************************************

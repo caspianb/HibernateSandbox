@@ -19,11 +19,17 @@ dependencies {
 
     implementation group: 'org.hibernate', name: 'hibernate-core', version: '6.2.22.Final'
     implementation 'org.hsqldb:hsqldb:2.7.2'
-    implementation 'org.slf4j:slf4j-api:2.0.12'
+
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+
+    // UUID Creator
+    implementation 'com.github.f4b6a3:uuid-creator:5.3.7'
 
     // JAX-B dependencies for JDK 9+
-    implementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
-    implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
+    //implementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
+    //implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
 
     compileOnly 'org.projectlombok:lombok:+'
     annotationProcessor 'org.projectlombok:lombok:+'

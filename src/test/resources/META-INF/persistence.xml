@@ -3,6 +3,7 @@
     <persistence-unit name="test" transaction-type="RESOURCE_LOCAL">
         <class>com.logicalbias.jpa.entity.Parent</class>
         <class>com.logicalbias.jpa.entity.Child</class>
+        <class>com.logicalbias.jpa.entity.TestEntity</class>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
     </persistence-unit>
 </persistence>

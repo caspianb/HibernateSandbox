@@ -1,4 +1,4 @@
-package entity;
+package com.logicalbias.jpa.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;

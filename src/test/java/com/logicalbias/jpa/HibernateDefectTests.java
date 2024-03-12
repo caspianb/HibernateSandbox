@@ -1,5 +1,8 @@
-import entity.Child;
-import entity.Parent;
+package com.logicalbias.jpa;
+
+import com.logicalbias.jpa.entity.Child;
+import com.logicalbias.jpa.entity.Parent;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import lombok.extern.slf4j.Slf4j;
@@ -84,7 +87,7 @@ public class HibernateDefectTests {
         // TODO Another interesting thing to note - em.getLockMode returns an incorrect value after the above refresh
         Assertions.assertEquals(LockModeType.PESSIMISTIC_WRITE, em.getLockMode(parent));
 
-        // Just something to force delazification of children on parent entity
+        // Just something to force delazification of children on parent com.logicalbias.jpa.entity
         // The parent is obviously attached to the session (we just refreshed it!)
         parent.getChildrenLazy().size();
     }
@@ -142,7 +145,7 @@ public class HibernateDefectTests {
         em.refresh(parent0);
 
         // Read in a child which points to parent0; then refresh parent0
-        // The problem here, is child will get a reference to the *new* duplicate entity in the cache above
+        // The problem here, is child will get a reference to the *new* duplicate com.logicalbias.jpa.entity in the cache above
         Child child = em.find(Child.class, 0);
 
         // Refresh the original parent, reconnecting it to the session

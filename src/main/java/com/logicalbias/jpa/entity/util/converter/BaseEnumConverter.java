@@ -1,4 +1,4 @@
-package entity.util;
+package com.logicalbias.jpa.entity.util.converter;
 
 import jakarta.persistence.AttributeConverter;
 
