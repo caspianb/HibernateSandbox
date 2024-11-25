@@ -1,2 +1,2 @@
 # HibernateRefreshTest
-Simple unit tests illustrating potential defects in Hibernate refresh with lock API
+Hibernate Sandbox for isolating and testing potential defects located in Hibernate.
